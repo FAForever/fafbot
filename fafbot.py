@@ -37,8 +37,7 @@ import json
 from passwords import DB_SERVER, DB_PORT, DB_LOGIN, DB_PASSWORD, DB_TABLE
 
 from configobj import ConfigObj
-config = ConfigObj("/etc/faforever/faforever.conf")
-fafbot_config = ConfigObj("fafbot.conf")
+fafbot_config = ConfigObj("fafbot.conf")['fafbot']
 
 from threading import Timer
 from trueSkill.GameInfo import GameInfo
@@ -47,10 +46,12 @@ from trueSkill.Team import Team
 from trueSkill.Rating import Rating
 from trueSkill.Teams import Teams
 
+CHANNEL = fafbot_config['channel']
 TWITCH_STREAMS = "https://api.twitch.tv/kraken/streams/?game=" #add the game name at the end of the link (space = "+", eg: Game+Name)
 STREAMER_INFO  = "https://api.twitch.tv/kraken/streams/" #add streamer name at the end of the link
 GAME = "Supreme+Commander:+Forged+Alliance"
 HITBOX_STREAMS = "https://www.hitbox.tv/api/media/live/list?filter=popular&game=811&hiddenOnly=false&limit=30&liveonly=true&media=true"
+DOWNLOAD_LINK = "http://content.faforever.com/faf/vault/replay_vault/replay.php?id="
 
 class betmatch(object):
     def __init__(self, uid, startTime, name, odds, mostProbableWinner):
@@ -136,11 +137,10 @@ class bettingSystem(object):
 class BotModeration(ircbot.SingleServerIRCBot):
     def __init__(self):
         """
-        Constructeur qui pourrait prendre des parametres dans un "vrai" programme.
-        """
+        Constructeur qui pourrait prendre des parametres dans un "vrai" programme.  """
         # FIXME: hardcoded ip
         ircbot.SingleServerIRCBot.__init__(self, [("37.58.123.2", 6667)],
-                                           "fafbot", "FAF bot")
+                                           fafbot_config['nickname'], "FAF bot")
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
@@ -252,13 +252,13 @@ class BotModeration(ircbot.SingleServerIRCBot):
                             reward = reward + reward * ratio
                             self.addToBalance(reward, betwinnerUid)
                             text = ("%s has won %i on the match \"%s\" (winner was %s). He has now %i credits.") % (self.getNameFromUid(betwinnerUid), reward, match.name, self.getNameFromUid(winnerUid), self.currentBalance(betwinnerUid))
-                            self.connection.privmsg("#aeolus", text)
+                            self.connection.privmsg(CHANNEL, text)
                     else :
                         text = ("no gambler win a bet for %s! (winner of the match was %s)" % (match.name, self.getNameFromUid(winnerUid)))
-                        self.connection.privmsg("#aeolus", text)
+                        self.connection.privmsg(CHANNEL, text)
 
                     text = ("%i gambler(s) for the winner, %i for the loser.") % (winnerSize, loserSize)
-                    self.connection.privmsg("#aeolus", text)
+                    self.connection.privmsg(CHANNEL, text)
                     matchsToDelete.append(uid)
                     
             for uid in matchsToDelete:
@@ -405,18 +405,18 @@ class BotModeration(ircbot.SingleServerIRCBot):
                         streams_hitbox = {"livestream": []}
                     num_of_streams = len(streams["streams"]) + len(streams_hitbox["livestream"])
                     if num_of_streams > 0:
-                        self.connection.privmsg("#aeolus", "%i Streams online :" % num_of_streams)
+                        self.connection.privmsg(CHANNEL, "%i Streams online :" % num_of_streams)
                         for stream in streams["streams"]:
                             #print stream["channel"]
                             t = stream["channel"]["updated_at"]
                             date = t.split("T")
                             hour = date[1].replace("Z", "")
 
-                            self.connection.privmsg("#aeolus", "%s - %s - %s Since %s (%i viewers) " % (stream["channel"]["display_name"], stream["channel"]["status"], stream["channel"]["url"], hour, stream["viewers"]))
+                            self.connection.privmsg(CHANNEL, "%s - %s - %s Since %s (%i viewers) " % (stream["channel"]["display_name"], stream["channel"]["status"], stream["channel"]["url"], hour, stream["viewers"]))
                         for stream in streams_hitbox["livestream"]:
-                            self.connection.privmsg("#aeolus", "%s - %s - %s Since %s (%s viewers) " % (stream["media_display_name"], stream["media_status"], stream["channel"]["channel_link"], stream["media_live_since"], stream["media_views"]))
+                            self.connection.privmsg(CHANNEL, "%s - %s - %s Since %s (%s viewers) " % (stream["media_display_name"], stream["media_status"], stream["channel"]["channel_link"], stream["media_live_since"], stream["media_views"]))
                     else:
-                        self.connection.privmsg("#aeolus", "No one is streaming :'(")
+                        self.connection.privmsg(CHANNEL, "No one is streaming :'(")
             if message.startswith("!casts"):
                 if time.time() - self.askForYoutube > 60*10:
                     self.askForYoutube = time.time()
@@ -424,40 +424,128 @@ class BotModeration(ircbot.SingleServerIRCBot):
                     info = con.read()
                     con.close()
                     data = json.loads(info)
-                    self.connection.privmsg("#aeolus", "5 Latest youtube videos:")
+                    self.connection.privmsg(CHANNEL, "5 Latest youtube videos:")
                     for item in data['data']['items']:
                         t = item["uploaded"]
                         date = t.split("T")[0]
                         like = "0"
                         if "likeCount" in item:
                             like = item['likeCount']
-                        self.connection.privmsg("#aeolus", "%s by %s - %s - %s (%s likes) " % (item['title'], item["uploader"], item['player']['default'].replace("&feature=youtube_gdata_player", ""), date, like))
+                        self.connection.privmsg(CHANNEL, "%s by %s - %s - %s (%s likes) " % (item['title'], item["uploader"], item['player']['default'].replace("&feature=youtube_gdata_player", ""), date, like))
+
+            source  = e.source.nick
+            print source, message
+            message = e.arguments[0]
+            if message.startswith("!odds"):
+                m = re.search(r"^!odds\s(.+)", message)
+                if m:
+                    who = str(m.group(1))
+                    if not playeruid:
+                        print "no player uid"
+                        return
+                    match = self.getMatches(playeruid)
+                    if match :
+                        text =self.getOdds(match)
+                        self.connection.privmsg(source, text)
+
+            elif message.startswith("!balance"):
+                uid = self.getUid(source)
+                if uid:
+
+                    balance = self.currentBalance(uid)
+                    text = "%s has : %i credits." % (source, balance)
+                    self.connection.privmsg(source, text)
 
 
+            elif message.startswith("!bet"):
+                if message.startswith("!bet"):
+                    if len(message) < 7:
+                        return
+                    m = re.search(r"^!bet\s(\d+)\son\s(.+)", message)
+                    if m:
+                        #print "find regexp"
+                        amount = min(50,int(m.group(1)))
+                        who = str(m.group(2))
+                        #print amount, who
+                        # we check if the source has money
+                        uid = self.getUid(source)
+                        if not uid:
+                            #print "no uid"
+                            return
 
-        except:
-            pass
+                        playeruid = self.getUid(who)
+                        if not playeruid:
+                            #print "no player uid"
+                            return
+
+                        match = self.getMatches(playeruid)
+                        if not match:
+                            #print "no match"
+                            return
+
+                        match = self.betting.addMatch(match)
+                        if not match:
+                            #print "no match 2"
+                            return
+
+                        balance = self.currentBalance(uid)
+
+                        if uid in match.players:
+                            return
+
+                        resultAmount = match.addBeter(amount, uid, playeruid)
+                        if resultAmount < amount:
+                            text = "%s has taken a bet of %i (amount reduced due to the in-game time) on \"%s\" (his balance is now %i)." % (source, resultAmount, match.name, balance-resultAmount)
+                            self.connection.privmsg(source, text)
+                            self.updateBalance(balance-resultAmount, uid)       
+                        else :                        
+                            text = "%s has taken a bet of %i on \"%s\" (his balance is now %i)." % (source, amount, match.name, balance-amount)
+                            self.connection.privmsg(source, text)
+                            self.updateBalance(balance-amount, uid)
+
+            else:
+                replayID = re.search(r'.*#(\d+).*', message)
+                replayID = replayID.group(1)
+                query = QtSql.QSqlQuery(self.db)
+                query.prepare("SELECT count(id) from game_stats where id=?")
+                query.addBindValue(replayID)
+                query.exec_()
+                query.next()
+                games = query.value(0)
+                if games > 0:
+                  query.prepare("select login as player, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
+                  query.addBindValue(replayID)
+                  query.exec_()
+                  players = []
+                  while query.next():
+                    players.append(str(query.value(0)))
+                    mapname = str(query.value(1))
+                  players = ", ".join(players)
+                  c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s): %s" % (replayID, players, mapname, DOWNLOAD_LINK+replayID))
+
+        except e:
+           print e
 
     def on_welcome(self, c, e):
-        """
+       """
 
-        """
-        print "got welcomed"
-        #self.connection.join("#aeolus")
-        try:
-            if self.nickpass and c.get_nickname() != self.nickname:
-                # Reclaim our desired nickname
-                #print "nick on use"
-                c.privmsg('nickserv', 'ghost %s %s' % (self.nickname, self.nickpass))
-        except:
-            pass
+       """
+       print "got welcomed"
+       try:
+           if self.nickpass and c.get_nickname() != self.nickname:
+               # Reclaim our desired nickname
+               #print "nick on use"
+               c.privmsg('nickserv', 'ghost %s %s' % (self.nickname, self.nickpass))
+       except:
+           pass
+
     def on_privnotice(self, c, e):
         try:
-            source = e.source.nick        
+            source = e.source.nick
             print source, e.arguments[0]
             if source and source.lower() == 'ze_pilot_':
                 if 'SENDALL' in e.arguments[0] :
-                    users = self.channels["#aeolus"].users()
+                    users = self.channels[CHANNEL].users()
                     chunks = lambda l, n: [l[x: x+n] for x in xrange(0, len(l), n)]
                     mesg = e.arguments[0][9:]
                     print mesg 
@@ -496,11 +584,12 @@ class BotModeration(ircbot.SingleServerIRCBot):
                     self.connection.join("#seraphim")
                     time.sleep(1)
                     self.connection.join("#uef")
-                    self.connection.join("#aeolus")
+                    self.connection.join(CHANNEL)
                 
                 
         except:
             pass
+
     def _on_join(self, c, e):
         try:
             ch = e.target
