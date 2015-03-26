@@ -51,6 +51,7 @@ TWITCH_STREAMS = "https://api.twitch.tv/kraken/streams/?game=" #add the game nam
 STREAMER_INFO  = "https://api.twitch.tv/kraken/streams/" #add streamer name at the end of the link
 GAME = "Supreme+Commander:+Forged+Alliance"
 HITBOX_STREAMS = "https://www.hitbox.tv/api/media/live/list?filter=popular&game=811&hiddenOnly=false&limit=30&liveonly=true&media=true"
+DOWNLOAD_LINK = "http://content.faforever.com/faf/vault/replay_vault/replay.php?id="
 
 class betmatch(object):
     def __init__(self, uid, startTime, name, odds, mostProbableWinner):
@@ -433,8 +434,28 @@ class BotModeration(ircbot.SingleServerIRCBot):
                         self.connection.privmsg(CHANNEL, "%s by %s - %s - %s (%s likes) " % (item['title'], item["uploader"], item['player']['default'].replace("&feature=youtube_gdata_player", ""), date, like))
 
 
-        except:
-            pass
+            else:
+                replayID = re.search(r'.*#(\d+).*', message)
+                replayID = replayID.group(1)
+                query = QtSql.QSqlQuery(self.db)
+                query.prepare("SELECT count(id) from game_stats where id=?")
+                query.addBindValue(replayID)
+                query.exec_()
+                query.next()
+                games = query.value(0)
+                if games > 0:
+                  query.prepare("select login as player, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
+                  query.addBindValue(replayID)
+                  query.exec_()
+                  players = []
+                  while query.next():
+                    players.append(str(query.value(0)))
+                    mapname = str(query.value(1))
+                  players = ", ".join(players)
+                  c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s): %s" % (replayID, players, mapname, DOWNLOAD_LINK+replayID))
+
+        except e:
+           print e
 
     def on_welcome(self, c, e):
         """
