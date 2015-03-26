@@ -433,6 +433,75 @@ class BotModeration(ircbot.SingleServerIRCBot):
                             like = item['likeCount']
                         self.connection.privmsg(CHANNEL, "%s by %s - %s - %s (%s likes) " % (item['title'], item["uploader"], item['player']['default'].replace("&feature=youtube_gdata_player", ""), date, like))
 
+            source  = e.source.nick
+            print source, message
+            message = e.arguments[0]
+            if message.startswith("!odds"):
+                m = re.search(r"^!odds\s(.+)", message)
+                if m:
+                    who = str(m.group(1))
+                    if not playeruid:
+                        print "no player uid"
+                        return
+                    match = self.getMatches(playeruid)
+                    if match :
+                        text =self.getOdds(match)
+                        self.connection.privmsg(source, text)
+
+            elif message.startswith("!balance"):
+                uid = self.getUid(source)
+                if uid:
+
+                    balance = self.currentBalance(uid)
+                    text = "%s has : %i credits." % (source, balance)
+                    self.connection.privmsg(source, text)
+
+
+            elif message.startswith("!bet"):
+                if message.startswith("!bet"):
+                    if len(message) < 7:
+                        return
+                    m = re.search(r"^!bet\s(\d+)\son\s(.+)", message)
+                    if m:
+                        #print "find regexp"
+                        amount = min(50,int(m.group(1)))
+                        who = str(m.group(2))
+                        #print amount, who
+                        # we check if the source has money
+                        uid = self.getUid(source)
+                        if not uid:
+                            #print "no uid"
+                            return
+
+                        playeruid = self.getUid(who)
+                        if not playeruid:
+                            #print "no player uid"
+                            return
+
+                        match = self.getMatches(playeruid)
+                        if not match:
+                            #print "no match"
+                            return
+
+                        match = self.betting.addMatch(match)
+                        if not match:
+                            #print "no match 2"
+                            return
+
+                        balance = self.currentBalance(uid)
+
+                        if uid in match.players:
+                            return
+
+                        resultAmount = match.addBeter(amount, uid, playeruid)
+                        if resultAmount < amount:
+                            text = "%s has taken a bet of %i (amount reduced due to the in-game time) on \"%s\" (his balance is now %i)." % (source, resultAmount, match.name, balance-resultAmount)
+                            self.connection.privmsg(source, text)
+                            self.updateBalance(balance-resultAmount, uid)       
+                        else :                        
+                            text = "%s has taken a bet of %i on \"%s\" (his balance is now %i)." % (source, amount, match.name, balance-amount)
+                            self.connection.privmsg(source, text)
+                            self.updateBalance(balance-amount, uid)
 
             else:
                 replayID = re.search(r'.*#(\d+).*', message)
@@ -458,18 +527,18 @@ class BotModeration(ircbot.SingleServerIRCBot):
            print e
 
     def on_welcome(self, c, e):
-        """
+       """
 
-        """
-        print "got welcomed"
-        #self.connection.join("#aeolus")
-        try:
-            if self.nickpass and c.get_nickname() != self.nickname:
-                # Reclaim our desired nickname
-                #print "nick on use"
-                c.privmsg('nickserv', 'ghost %s %s' % (self.nickname, self.nickpass))
-        except:
-            pass
+       """
+       print "got welcomed"
+       try:
+           if self.nickpass and c.get_nickname() != self.nickname:
+               # Reclaim our desired nickname
+               #print "nick on use"
+               c.privmsg('nickserv', 'ghost %s %s' % (self.nickname, self.nickpass))
+       except:
+           pass
+
     def on_privnotice(self, c, e):
         try:
             source = e.source.nick
