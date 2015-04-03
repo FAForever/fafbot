@@ -52,7 +52,6 @@ STREAMER_INFO  = "https://api.twitch.tv/kraken/streams/" #add streamer name at t
 GAME = "Supreme+Commander:+Forged+Alliance"
 HITBOX_STREAMS = "https://www.hitbox.tv/api/media/live/list?filter=popular&game=811&hiddenOnly=false&limit=30&liveonly=true&media=true"
 DOWNLOAD_LINK = "http://content.faforever.com/faf/vault/replay_vault/replay.php?id="
-COMMANDS = []
 
 class betmatch(object):
     def __init__(self, uid, startTime, name, odds, mostProbableWinner):
@@ -395,30 +394,6 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
         except:
             pass
 
-    def irc_Command(self,message,sender):
-        # whyyyy :( idk decorators
-        # No decorators needed
-        try:
-            if message.startswith("!streams"):
-                self.streams_Msg()
-            elif message.startswith("!casts"):
-                self.casts_Msg()
-            elif message.startswith("!odds"):
-                self.odds_Msg()
-            elif message.startswith("!balance"):
-                self.balance_Msg()
-            elif message.startswith("!bet"):
-                self.bet_Msg()
-            elif message.startswith("!help"):
-                self.help_Msg(sender)
-            elif message.startswith("!mods"):
-                self.mods_Msg(sender)
-            elif message.startswith("!trainers"):
-                self.trainers_Msg(sender)
-        except Exception as ex:
-            print(ex) # These stupid try/catch blocks are also why it won't exit
-            return None
-
     def streams_Msg(self):
         """
         !streams - Displays a list of current Supreme Commander streamers
@@ -445,7 +420,7 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
              else:
                  self.connection.privmsg(CHANNEL, "No one is streaming :'(")
 
-    def casts_Msg(self):
+    def casts_Msg(self,sender):
         """
         !casts - Displays a list of the 5 latest supreme commander related youtube videos
         """
@@ -468,7 +443,7 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
         print source, message
         message = e.arguments[0]
 
-    def odds_Msg(self):
+    def odds_Msg(self,sender):
         """
         !odds - Displays the odds of a player winning their ladder match (format: !odds Username)
         """
@@ -483,7 +458,7 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
                 text =self.getOdds(match)
                 self.connection.privmsg(source, text)
 
-    def balance_Msg(self):
+    def balance_Msg(self,sender):
         """
         !balance - Messages sender their betting balance
         """
@@ -493,7 +468,7 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
             text = "%s has : %i credits." % (source, balance)
             self.connection.privmsg(source, text)
 
-    def bet_Msg(self):
+    def bet_Msg(self,sender):
         """
         !bet - Bet on a player in a ladder match (format: !bet amount on Username)
         """
@@ -578,38 +553,50 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
 
     def help_Msg(self,sender):
         """!help - Displays a list of fafbot commands"""
-        #I did tests with Vee, my way is 2 seconds, your way is 4 seconds
         if time.time() - self.askForHelp > 60*10:
             self.askForHelp = time.time()
-            for commanddoc in COMMANDS:
-                self.connection.privmsg(CHANNEL,commanddoc)
-            self.connection.privmsg(CHANNEL,"#ReplayID - returns a download link to a given replay ID with the players and map in the game")
+            commands = [(name, getattr(BotModeration, name)) for name in dir(BotModeration) if 'Msg' in name]
+            for name, func in commands:
+                doc = func.__doc__.strip()
+                self.connection.privmsg(CHANNEL,doc)
+            #for commanddoc in COMMANDS:
+            #    self.connection.privmsg(CHANNEL,commanddoc)
+
+    def replayid_Msg(self,message,c):
+        """#ReplayID - returns a download link to a given replay ID with the players and map in the game")
+        """
+        replayID = re.search(r'.*#(\d+).*', message)
+        replayID = replayID.group(1)
+        query = QtSql.QSqlQuery(self.db)
+        query.prepare("SELECT count(id) from game_stats where id=?")
+        query.addBindValue(replayID)
+        query.exec_()
+        query.next()
+        games = query.value(0)
+        if games > 0:
+            query.prepare("select login as player, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
+            query.addBindValue(replayID)
+            query.exec_()
+            players = []
+            while query.next():
+                players.append(str(query.value(0)))
+                mapname = str(query.value(1))
+            players = ", ".join(players)
+            c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s): %s" % (replayID, players, mapname, DOWNLOAD_LINK+replayID))
 
     def on_pubmsg(self, c, e):
         try:
             message = e.arguments[0]
             source = e.source.nick
-            if message.startswith("!"):
-                self.irc_Command(message,source)
-            elif message.startswith(r'.#(\d+).*'):
-                replayID = re.search(r'.*#(\d+).*', message)
-                replayID = replayID.group(1)
-                query = QtSql.QSqlQuery(self.db)
-                query.prepare("SELECT count(id) from game_stats where id=?")
-                query.addBindValue(replayID)
-                query.exec_()
-                query.next()
-                games = query.value(0)
-                if games > 0:
-                    query.prepare("select login as player, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
-                    query.addBindValue(replayID)
-                    query.exec_()
-                    players = []
-                    while query.next():
-                      players.append(str(query.value(0)))
-                      mapname = str(query.value(1))
-                    players = ", ".join(players)
-                    c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s): %s" % (replayID, players, mapname, DOWNLOAD_LINK+replayID))
+            commands = {name.split('_')[0]: getattr(BotModeration, name) for name in dir(BotModeration) if 'Msg' in name}
+            if(re.search(r'.*#(\d+).*',message)):
+                self.replayid_Msg(message,c)
+            else:
+                commandgroup = re.match('!(\w+).*',message)
+                if commandgroup:
+                    command_name = commandgroup.groups(1)[0]
+                    if command_name in commands:
+                        result = commands[command_name](self,source)
 
         except e:
             print e
@@ -665,10 +652,6 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
                     self.connection.privmsg('Chanserv', 'INVITE #uef')
                     time.sleep(5)
 
-                    commands = [(name, getattr(self, name)) for name in dir(self) if 'Msg' in name]
-                    for name, func in commands:
-                        COMMANDS.append(func.__doc__.strip())
-                    
                     self.connection.join("#aeon")
                     time.sleep(1)
                     self.connection.join("#cybran")
@@ -677,8 +660,7 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
                     time.sleep(1)
                     self.connection.join("#uef")
                     self.connection.join(CHANNEL)
-                
-                
+        
         except:
             pass
 
