@@ -19,5 +19,14 @@ def test_when_no_one_is_streaming__streams_command_returns_sadface():
 def test_when_one_person_is_streaming__streams_command_returns_steam_count_1_and_stream():
     message_handler = MessageHandler(new_url_content_fetcher('twitch-streams-one.json'))
 
-    assert message_handler.handle_message('!streams') == ["1 Streams online :",
-                                                          "TAG_Chosen - THERE YOU GO - http://www.twitch.tv/tag_chosen Since 15:52:44 (3 viewers)"]
+    assert message_handler.handle_message('!streams') == [
+        "1 Streams online :",
+        "TAG_Chosen - THERE YOU GO - http://www.twitch.tv/tag_chosen Since 15:52:44 (3 viewers)"
+    ]
+
+
+def test_immediate_repeat_of_command_leads_to_empty_result():
+    message_handler = MessageHandler(new_url_content_fetcher('twitch-streams-none.json'))
+
+    message_handler.handle_message('!streams')
+    assert message_handler.handle_message('!streams') == []

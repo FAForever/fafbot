@@ -21,9 +21,9 @@ class MessageHandler:
 
     def handle_message(self, message):
         command_name = self._get_command_from_message(message)
-        
+
         if command_name in self.command_handlers:
-            return self.command_handlers[command_name]()
+            return self.command_handlers[command_name](message)
 
         return []
 
@@ -33,7 +33,7 @@ class MessageHandler:
         if message_parts:
             return message_parts.groups(1)[0]
 
-    def _get_streams_response(self):
+    def _get_streams_response(self, message):
         responses = []
 
         if time.time() - self.askForCast > 60*10:
@@ -55,7 +55,7 @@ class MessageHandler:
 
         return responses
 
-    def _get_casts_response(self):
+    def _get_casts_response(self, message):
         responses = []
 
         if time.time() - self.askForYoutube > 60*10:
