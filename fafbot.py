@@ -21,6 +21,7 @@
 
 import sys    # sys.setdefaultencoding is cancelled by site.py
 import urllib2
+from src.MessageHandler import MessageHandler
 
 reload(sys)    # to re-enable sys.setdefaultencoding()
 sys.setdefaultencoding('utf-8')
@@ -29,92 +30,56 @@ from irc.bot import Channel
 import time
 from PySide import QtSql
 
-import json
-
 from passwords import DB_SERVER, DB_PORT, DB_LOGIN, DB_PASSWORD, DB_TABLE
 
 from configobj import ConfigObj
 config = ConfigObj("/etc/faforever/faforever.conf")
 fafbot_config = ConfigObj("fafbot.conf")['fafbot']
 
-TWITCH_STREAMS = "https://api.twitch.tv/kraken/streams/?game=" #add the game name at the end of the link (space = "+", eg: Game+Name)
-GAME = "Supreme+Commander:+Forged+Alliance"
+
+def fetch_url_contents(url):
+    con = urllib2.urlopen(url)
+    response = con.read()
+    con.close()
+
+    return response
+
 
 class BotModeration(ircbot.SingleServerIRCBot):
     def __init__(self):
         # FIXME: hardcoded ip
-        ircbot.SingleServerIRCBot.__init__(self, [("37.58.123.2", 6667)],
-                                           "fafbot", "FAF bot")
+        ircbot.SingleServerIRCBot.__init__(
+            self,
+            [("37.58.123.2", 6667)],
+            "fafbot",
+            "FAF bot"
+        )
+
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
+        self.messageHandler = MessageHandler(fetch_url_contents)
+
+        self.init_database()
+
+    def init_database(self):
         self.db = QtSql.QSqlDatabase.addDatabase("QMYSQL")
-        self.db.setHostName(DB_SERVER)  
+        self.db.setHostName(DB_SERVER)
         self.db.setPort(DB_PORT)
 
-        self.db.setDatabaseName(DB_TABLE)  
-        self.db.setUserName(DB_LOGIN)  
+        self.db.setDatabaseName(DB_TABLE)
+        self.db.setUserName(DB_LOGIN)
         self.db.setPassword(DB_PASSWORD)
         self.db.open()
         self.db.setConnectOptions("MYSQL_OPT_RECONNECT = 1")
 
-        self.askForCast = 0
-        self.askForYoutube = 0
-
-        self.url_content_fetcher = self.fetch_url_contents
-
     def on_pubmsg(self, c, e):
         try:
-            responses = self.handle_message(e.arguments[0])
+            responses = self.messageHandler.handle_message(e.arguments[0])
 
             [self.connection.privmsg("#aeolus", response) for response in responses]
         except:
             pass
-
-
-    def handle_message(self, message):
-        responses = []
-
-        if message.startswith("!streams"):
-            if time.time() - self.askForCast > 60*10:
-                self.askForCast = time.time()
-
-                streams = json.loads(self.url_content_fetcher(TWITCH_STREAMS + GAME))
-                num_of_streams = len(streams["streams"])
-
-                if num_of_streams > 0:
-                    responses.append("%i Streams online :" % num_of_streams)
-                    for stream in streams["streams"]:
-                        t = stream["channel"]["updated_at"]
-                        date = t.split("T")
-                        hour = date[1].replace("Z", "")
-
-                        responses.append("%s - %s - %s Since %s (%i viewers)" % (stream["channel"]["display_name"], stream["channel"]["status"], stream["channel"]["url"], hour, stream["viewers"]))
-                else:
-                    responses.append("No one is streaming :'(")
-        if message.startswith("!casts"):
-            if time.time() - self.askForYoutube > 60*10:
-                self.askForYoutube = time.time()
-                info = self.url_content_fetcher("http://gdata.youtube.com/feeds/api/videos?q=forged+alliance+-SWTOR&max-results=5&v=2&orderby=published&alt=jsonc")
-                data = json.loads(info)
-                responses.append("5 Latest youtube videos:")
-                for item in data['data']['items']:
-                    t = item["uploaded"]
-                    date = t.split("T")[0]
-                    like = "0"
-                    if "likeCount" in item:
-                        like = item['likeCount']
-                    responses.append("%s by %s - %s - %s (%s likes) " % (item['title'], item["uploader"], item['player']['default'].replace("&feature=youtube_gdata_player", ""), date, like))
-
-        return responses
-
-    def fetch_url_contents(self, url):
-        con = urllib2.urlopen(url)
-        response = con.read()
-        con.close()
-
-        return response
-
 
     def on_welcome(self, c, e):
         """
