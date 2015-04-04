@@ -14,14 +14,24 @@ class MessageHandler:
         self.askForCast = 0
         self.askForYoutube = 0
 
-    def handle_message(self, message):
-        if message.startswith("!streams"):
-            return self._get_streams_response()
+        self.command_handlers = {
+            'streams': self._get_streams_response,
+            'casts': self._get_casts_response
+        }
 
-        if message.startswith("!casts"):
-            return self._get_casts_response()
+    def handle_message(self, message):
+        command_name = self._get_command_from_message(message)
+        
+        if command_name in self.command_handlers:
+            return self.command_handlers[command_name]()
 
         return []
+
+    def _get_command_from_message(self, message):
+        message_parts = re.match('!(\w+).*', message)
+
+        if message_parts:
+            return message_parts.groups(1)[0]
 
     def _get_streams_response(self):
         responses = []
