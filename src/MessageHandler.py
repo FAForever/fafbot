@@ -7,9 +7,16 @@ GAME = "Supreme+Commander:+Forged+Alliance"
 
 
 class MessageHandler:
-    def __init__(self, fetch_url_contents, rate_limit_in_seconds=60):
+    def __init__(self,
+                 fetch_url_contents,
+                 default_rate_limit_in_seconds=60,
+                 per_command_rate_limit_in_seconds=None):
+
+        if not per_command_rate_limit_in_seconds:
+            per_command_rate_limit_in_seconds = {}
         self._fetch_url_contents = fetch_url_contents
-        self._rate_limit_in_seconds = rate_limit_in_seconds
+        self._default_rate_limit = default_rate_limit_in_seconds
+        self._per_command_rate_limit = per_command_rate_limit_in_seconds if per_command_rate_limit_in_seconds is not None else {}
 
         self._command_handlers = {
             'streams': self._get_streams_response,
@@ -31,7 +38,10 @@ class MessageHandler:
         if command_name not in self._time_of_last_command_usage:
             return True
 
-        return time.time() - self._time_of_last_command_usage[command_name] > self._rate_limit_in_seconds
+        seconds_since_last_execution = time.time() - self._time_of_last_command_usage[command_name]
+        rate_limit_in_seconds = self._per_command_rate_limit[command_name] if command_name in self._per_command_rate_limit else self._default_rate_limit
+
+        return seconds_since_last_execution > rate_limit_in_seconds
 
     def _get_command_response(self, command_name, message):
         self._time_of_last_command_usage[command_name] = time.time()
