@@ -93,7 +93,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
                         date = t.split("T")
                         hour = date[1].replace("Z", "")
 
-                        responses.append("%s - %s - %s Since %s (%i viewers) " % (stream["channel"]["display_name"], stream["channel"]["status"], stream["channel"]["url"], hour, stream["viewers"]))
+                        responses.append("%s - %s - %s Since %s (%i viewers)" % (stream["channel"]["display_name"], stream["channel"]["status"], stream["channel"]["url"], hour, stream["viewers"]))
                 else:
                     responses.append("No one is streaming :'(")
         if message.startswith("!casts"):
