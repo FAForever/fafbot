@@ -38,14 +38,10 @@ config = ConfigObj("/etc/faforever/faforever.conf")
 fafbot_config = ConfigObj("fafbot.conf")['fafbot']
 
 TWITCH_STREAMS = "https://api.twitch.tv/kraken/streams/?game=" #add the game name at the end of the link (space = "+", eg: Game+Name)
-STREAMER_INFO  = "https://api.twitch.tv/kraken/streams/" #add streamer name at the end of the link
 GAME = "Supreme+Commander:+Forged+Alliance"
 
 class BotModeration(ircbot.SingleServerIRCBot):
     def __init__(self):
-        """
-        Constructeur qui pourrait prendre des parametres dans un "vrai" programme.
-        """
         # FIXME: hardcoded ip
         ircbot.SingleServerIRCBot.__init__(self, [("37.58.123.2", 6667)],
                                            "fafbot", "FAF bot")
