@@ -20,7 +20,7 @@
 
 
 import sys    # sys.setdefaultencoding is cancelled by site.py
-from src.MessageHandler import MessageHandler
+from src.MessageHandlerBuilder import MessageHandlerBuilder
 
 reload(sys)    # to re-enable sys.setdefaultencoding()
 sys.setdefaultencoding('utf-8')
@@ -49,7 +49,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
-        self.message_handler = MessageHandler(fafbot_config)
+        self.message_handler = MessageHandlerBuilder(fafbot_config).new_message_handler()
 
         self.init_database()
 
@@ -66,7 +66,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
 
     def on_pubmsg(self, c, e):
         try:
-            responses = self.message_handler.handle_message(e.arguments[0])
+            responses = self.message_handler(e.arguments[0])
 
             [self.connection.privmsg("#aeolus", response) for response in responses]
         except:
