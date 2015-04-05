@@ -3,3 +3,6 @@ host = irc.faforever.com
 channel = #test
 nickname = fafbot
 nickpass = some_awesome_password
+default_rate_limit = 60
+cast_count= 5
+blacklisted_youtubers=first_user_name,second_user_name
