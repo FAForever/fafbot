@@ -1,30 +1,9 @@
 from src.MessageHandler import MessageHandler
 
 
-def new_url_content_fetcher(file_name):
-    return lambda url: open('tests/data/' + file_name, 'r').read()
+def test_given_unknown_command__empty_list_is_returned():
+    assert MessageHandler().handle_message('!unknown') == []
 
 
-def test_when_no_one_is_streaming__streams_command_returns_sadface():
-    message_handler = MessageHandler(new_url_content_fetcher('twitch-streams-none.json'))
-
-    assert message_handler.handle_message('!streams') == ["No one is streaming :'("]
-
-
-def test_when_one_person_is_streaming__streams_command_returns_steam_count_1_and_stream():
-    message_handler = MessageHandler(new_url_content_fetcher('twitch-streams-one.json'))
-
-    assert message_handler.handle_message('!streams') == [
-        "1 Streams online :",
-        "TAG_Chosen - THERE YOU GO - http://www.twitch.tv/tag_chosen Since 15:52:44 (3 viewers)"
-    ]
-
-
-def test_when_two_people_are_streaming__streams_command_returns_both_streams():
-    message_handler = MessageHandler(new_url_content_fetcher('twitch-streams-two.json'))
-
-    assert message_handler.handle_message('!streams') == [
-        "2 Streams online :",
-        "zockyzock - BO50 vs petric winner gets tiep nudes   final score 25:12 for me - http://www.twitch.tv/zockyzock Since 17:21:06 (10 viewers)",
-        "TAG_Chosen - THERE YOU GO - http://www.twitch.tv/tag_chosen Since 17:16:06 (5 viewers)"
-    ]
+def test_given_known_command__command_result_is_returned():
+    assert MessageHandler().handle_message('!nyan') == ['~=[,,_,,]:3']

@@ -20,7 +20,6 @@
 
 
 import sys    # sys.setdefaultencoding is cancelled by site.py
-import urllib2
 from src.MessageHandler import MessageHandler
 
 reload(sys)    # to re-enable sys.setdefaultencoding()
@@ -37,14 +36,6 @@ config = ConfigObj("/etc/faforever/faforever.conf")
 fafbot_config = ConfigObj("fafbot.conf")['fafbot']
 
 
-def fetch_url_contents(url):
-    con = urllib2.urlopen(url)
-    response = con.read()
-    con.close()
-
-    return response
-
-
 class BotModeration(ircbot.SingleServerIRCBot):
     def __init__(self):
         # FIXME: hardcoded ip
@@ -58,7 +49,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
-        self.messageHandler = MessageHandler(fetch_url_contents)
+        self.messageHandler = MessageHandler()
 
         self.init_database()
 
