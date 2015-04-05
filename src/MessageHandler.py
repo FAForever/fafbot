@@ -11,11 +11,15 @@ class MessageHandler:
     """
 
     def __init__(self, config):
-
+        casts_handler = CastsCommandHandler(
+            url_content_fetcher=fetch_url_contents,
+            blacklisted_youtubers=config['blacklisted_youtubers'] if 'blacklisted_youtubers' in config else [],
+            cast_count=int(config['cast_count']) if 'cast_count' in config else 5
+        )
 
         command_handlers = {
+            'casts': casts_handler.get_response_for,
             'streams': StreamsCommandHandler(fetch_url_contents).get_response_for,
-            'casts': CastsCommandHandler(fetch_url_contents).get_response_for,
             'nyan': lambda message: ['~=[,,_,,]:3']
         }
 
