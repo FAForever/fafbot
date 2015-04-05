@@ -3,3 +3,4 @@ host = irc.faforever.com
 channel = #test
 nickname = fafbot
 nickpass = some_awesome_password
+default_rate_limit = 60

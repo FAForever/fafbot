@@ -49,7 +49,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
-        self.messageHandler = MessageHandler()
+        self.message_handler = MessageHandler(fafbot_config)
 
         self.init_database()
 
@@ -66,7 +66,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
 
     def on_pubmsg(self, c, e):
         try:
-            responses = self.messageHandler.handle_message(e.arguments[0])
+            responses = self.message_handler.handle_message(e.arguments[0])
 
             [self.connection.privmsg("#aeolus", response) for response in responses]
         except:
