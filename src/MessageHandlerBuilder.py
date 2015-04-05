@@ -6,8 +6,7 @@ from src.StreamsCommandHandler import StreamsCommandHandler
 
 class MessageHandlerBuilder:
     """
-    This class is responsible for constructing the object graph needed
-    to handle messages and to delegate to it.
+    This class is responsible for constructing the object graph needed to handle messages.
     """
 
     def __init__(self, config):
