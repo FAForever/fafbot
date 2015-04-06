@@ -1,0 +1,62 @@
+{
+	"streams": [
+		{
+			"_id": 13861920880,
+			"game": "Supreme Commander: Forged Alliance",
+			"viewers": 3,
+			"created_at": "2015-04-04T15:52:08Z",
+			"video_height": 1050,
+			"average_fps": 27.9693877551,
+			"_links": {"self": "https://api.twitch.tv/kraken/streams/tag_chosen"},
+			"preview": {
+				"small": "http://static-cdn.jtvnw.net/previews-ttv/live_user_tag_chosen-80x45.jpg",
+				"medium": "http://static-cdn.jtvnw.net/previews-ttv/live_user_tag_chosen-320x180.jpg",
+				"large": "http://static-cdn.jtvnw.net/previews-ttv/live_user_tag_chosen-640x360.jpg",
+				"template": "http://static-cdn.jtvnw.net/previews-ttv/live_user_tag_chosen-{width}x{height}.jpg"
+			},
+			"channel": {
+				"_links": {
+					"self": "https://api.twitch.tv/kraken/channels/tag_chosen",
+					"follows": "https://api.twitch.tv/kraken/channels/tag_chosen/follows",
+					"commercial": "https://api.twitch.tv/kraken/channels/tag_chosen/commercial",
+					"stream_key": "https://api.twitch.tv/kraken/channels/tag_chosen/stream_key",
+					"chat": "https://api.twitch.tv/kraken/chat/tag_chosen",
+					"features": "https://api.twitch.tv/kraken/channels/tag_chosen/features",
+					"subscriptions": "https://api.twitch.tv/kraken/channels/tag_chosen/subscriptions",
+					"editors": "https://api.twitch.tv/kraken/channels/tag_chosen/editors",
+					"videos": "https://api.twitch.tv/kraken/channels/tag_chosen/videos",
+					"teams": "https://api.twitch.tv/kraken/channels/tag_chosen/teams"
+				},
+				"background": null,
+				"banner": null,
+				"broadcaster_language": "en",
+				"display_name": "TAG_Chosen",
+				"game": "Supreme Commander: Forged Alliance",
+				"logo": "http://static-cdn.jtvnw.net/jtv_user_pictures/tag_chosen-profile_image-12cf5073386cbef4-300x300.jpeg",
+				"mature": false,
+				"status": "THERE YOU GO",
+				"partner": false,
+				"url": "http://www.twitch.tv/tag_chosen",
+				"video_banner": "http://static-cdn.jtvnw.net/jtv_user_pictures/tag_chosen-channel_offline_image-3ca9479dbe9d50a0-640x360.jpeg",
+				"_id": 41596222,
+				"name": "tag_chosen",
+				"created_at": "2013-03-22T19:17:09Z",
+				"updated_at": "2015-04-04T15:52:44Z",
+				"delay": 0,
+				"followers": 114,
+				"profile_banner": "http://static-cdn.jtvnw.net/jtv_user_pictures/tag_chosen-profile_banner-afabe72a93dfd169-480.jpeg",
+				"profile_banner_background_color": null,
+				"views": 8022,
+				"language": "fi"
+			}
+		}
+	],
+	"_total": 1,
+	"_links": {
+		"self": "https://api.twitch.tv/kraken/streams?game=Supreme+Commander%3A+Forged+Alliance&limit=25&offset=0",
+		"next": "https://api.twitch.tv/kraken/streams?game=Supreme+Commander%3A+Forged+Alliance&limit=25&offset=25",
+		"featured": "https://api.twitch.tv/kraken/streams/featured",
+		"summary": "https://api.twitch.tv/kraken/streams/summary",
+		"followed": "https://api.twitch.tv/kraken/streams/followed"
+	}
+}
