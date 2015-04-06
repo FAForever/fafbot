@@ -20,7 +20,7 @@
 
 
 import sys    # sys.setdefaultencoding is cancelled by site.py
-from src.MessageHandlerBuilder import MessageHandlerBuilder
+from src.MessageHandler import new_message_handler
 
 reload(sys)    # to re-enable sys.setdefaultencoding()
 sys.setdefaultencoding('utf-8')
@@ -49,7 +49,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
-        self.message_handler = MessageHandlerBuilder(fafbot_config).new_message_handler()
+        self.message_handler = new_message_handler(fafbot_config)
 
         self.init_database()
 
