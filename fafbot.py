@@ -52,7 +52,7 @@ STREAMER_INFO  = "https://api.twitch.tv/kraken/streams/" #add streamer name at t
 GAME = "Supreme+Commander:+Forged+Alliance"
 HITBOX_STREAMS = "https://www.hitbox.tv/api/media/live/list?filter=popular&game=811&hiddenOnly=false&limit=30&liveonly=true&media=true"
 DOWNLOAD_LINK = "http://content.faforever.com/faf/vault/replay_vault/replay.php?id="
-
+FACTION = {1:"UEF",2:"Aeon",3:"Cybran",4:"Seraphim"}
 class betmatch(object):
     def __init__(self, uid, startTime, name, odds, mostProbableWinner):
         try:
@@ -574,15 +574,17 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
         query.next()
         games = query.value(0)
         if games > 0:
-            query.prepare("select login as player, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
+            query.prepare("select login as player,(select startTime from game_stats where id=?) as date, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
+            query.addBindValue(replayID)
             query.addBindValue(replayID)
             query.exec_()
             players = []
             while query.next():
                 players.append(str(query.value(0)))
-                mapname = str(query.value(1))
+                mapname = str(query.value(2))
+                starttime = query.value(1).toString("yyyy-MM-dd")
             players = ", ".join(players)
-            c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s): %s" % (replayID, players, mapname, DOWNLOAD_LINK+replayID))
+            c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s | Date: %s): %s" % (replayID, players, mapname,starttime, DOWNLOAD_LINK+replayID))
 
     def on_pubmsg(self, c, e):
         try:
