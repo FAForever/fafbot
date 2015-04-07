@@ -574,17 +574,18 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
         query.next()
         games = query.value(0)
         if games > 0:
-            query.prepare("select login as player,(select startTime from game_stats where id=?) as date, name as map from game_player_stats inner join login on login.id=game_player_stats.playerId inner join game_stats on game_player_stats.gameId=game_stats.id inner join table_map on table_map.id=game_stats.mapId where gameId=?")
-            query.addBindValue(replayID)
+            query.prepare("SELECT lg.login AS player, gs.startTime AS date, tm.name AS map, gps.faction AS faction FROM game_player_stats gps INNER JOIN login lg ON lg.id = gps.playerId INNER JOIN game_stats gs ON gps.gameId = gs.id INNER JOIN table_map tm ON tm.id = gs.mapId WHERE gps.gameId = ?")
             query.addBindValue(replayID)
             query.exec_()
             players = []
+            factions = []
             while query.next():
                 players.append(str(query.value(0)))
-                mapname = str(query.value(2))
                 starttime = query.value(1).toString("yyyy-MM-dd")
-            players = ", ".join(players)
-            c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s | Date: %s): %s" % (replayID, players, mapname,starttime, DOWNLOAD_LINK+replayID))
+                mapname = str(query.value(2))
+                factions.append(FACTION[query.value(3)])
+            playerAndFaction = ", ".join("%s - %s" % t for t in zip(players,factions))
+            c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s | Date: %s): %s" % (replayID, playerAndFaction, mapname, starttime, DOWNLOAD_LINK+replayID))
 
     def on_pubmsg(self, c, e):
         try:
