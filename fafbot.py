@@ -171,40 +171,14 @@ class BotModeration(ircbot.SingleServerIRCBot):
                     time.sleep(1)
                     self.connection.join("#uef")
                     self.connection.join("#aeolus")
-                
-                
+
         except:
             pass
+
     def _on_join(self, c, e):
         try:
             ch = e.target
             nick = e.source.nick
-            if nick == c.get_nickname():
-                self.channels[ch] = Channel()
-                self.connection.send_raw("NAMES" + (ch))
-                #self.connection.send_raw("PRIVMSG %s :%s" % ("#aeolus", "yo!"))
-            elif "aeolus" in ch :
-                #print nick,"has joined", ch
-                query = QtSql.QSqlQuery(self.db)
-                query.prepare("SELECT faction, IFNULL(dominant,-1) FROM galacticwar.accounts LEFT join galacticwar.domination on galacticwar.accounts.faction = galacticwar.domination.slave WHERE  galacticwar.accounts.uid = (SELECT id FROM faf_lobby.login WHERE login = ? )")
-                query.addBindValue(nick)
-                query.exec_()
-                if query.size() > 0:
-                    query.first()
-                    if int(query.value(1)) != -1:
-                        faction = int(query.value(1))
-                    else:
-                        faction = int(query.value(0))
-                    if faction == 0 :
-                        channel = "#UEF"
-                    elif faction == 1 :
-                        channel = "#Aeon"
-                    elif faction == 2 :
-                        channel = "#Cybran"
-                    elif faction == 3 :
-                        channel = "#Seraphim"
-    
-                    self.connection.privmsg('chanserv', 'INVITE %s %s' % (channel, nick))
             self.channels[ch].add_user(nick)
         except:
             pass
