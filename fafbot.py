@@ -18,8 +18,8 @@
 #-------------------------------------------------------------------------------
 
 
+import sys   # sys.setdefaultencoding is cancelled by site.py
 
-import sys    # sys.setdefaultencoding is cancelled by site.py
 reload(sys)    # to re-enable sys.setdefaultencoding()
 sys.setdefaultencoding('utf-8')
 from irc import bot as ircbot
@@ -125,19 +125,20 @@ class BotModeration(ircbot.SingleServerIRCBot):
                 c.privmsg('nickserv', 'ghost %s %s' % (self.nickname, self.nickpass))
         except:
             pass
+
     def on_privnotice(self, c, e):
         try:
             source = e.source.nick        
             print source, e.arguments[0]
             if source and source.lower() == 'ze_pilot_':
-                if 'SENDALL' in e.arguments[0] :
+                if 'SENDALL' in e.arguments[0]:
                     users = self.channels["#aeolus"].users()
                     chunks = lambda l, n: [l[x: x+n] for x in xrange(0, len(l), n)]
                     mesg = e.arguments[0][9:]
                     print mesg 
                     c = chunks(users, 40)
                     for manyPlayer in c:
-                        s=  ",".join(manyPlayer)
+                        s = ",".join(manyPlayer)
                         raw = "PRIVMSG %s :%s" % (s, mesg)
                         print raw
                         #self.send_raw(raw)
