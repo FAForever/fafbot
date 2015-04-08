@@ -51,7 +51,7 @@ TWITCH_STREAMS = "https://api.twitch.tv/kraken/streams/?game=" #add the game nam
 STREAMER_INFO  = "https://api.twitch.tv/kraken/streams/" #add streamer name at the end of the link
 GAME = "Supreme+Commander:+Forged+Alliance"
 HITBOX_STREAMS = "https://www.hitbox.tv/api/media/live/list?filter=popular&game=811&hiddenOnly=false&limit=30&liveonly=true&media=true"
-DOWNLOAD_LINK = "http://content.faforever.com/faf/vault/replay_vault/replay.php?id="
+DOWNLOAD_LINK = "replay.faforever.com/"
 FACTION = {1:"UEF",2:"Aeon",3:"Cybran",4:"Seraphim"}
 class betmatch(object):
     def __init__(self, uid, startTime, name, odds, mostProbableWinner):
@@ -559,8 +559,6 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
             for name, func in commands:
                 doc = func.__doc__.strip()
                 self.connection.privmsg(CHANNEL,doc)
-            #for commanddoc in COMMANDS:
-            #    self.connection.privmsg(CHANNEL,commanddoc)
 
     def replayid_Msg(self,message,c):
         """#ReplayID - returns a download link to a given replay ID with the players and map in the game")
@@ -584,8 +582,8 @@ class BotModeration(ircbot.SingleServerIRCBot, ircbot.Channel):
                 starttime = query.value(1).toString("yyyy-MM-dd")
                 mapname = str(query.value(2))
                 factions.append(FACTION[query.value(3)])
-            playerAndFaction = ", ".join("%s - %s" % t for t in zip(players,factions))
-            c.privmsg(CHANNEL, "Replay download link (%s) (Players: %s | Map: %s | Date: %s): %s" % (replayID, playerAndFaction, mapname, starttime, DOWNLOAD_LINK+replayID))
+            playerAndFaction = ", ".join("%s [%s]" % t for t in zip(players,factions))
+            c.privmsg(CHANNEL, "Replay %s | Players: %s | Map: %s | %s : %s" % (replayID, playerAndFaction, mapname, starttime, DOWNLOAD_LINK+replayID))
 
     def on_pubmsg(self, c, e):
         try:
