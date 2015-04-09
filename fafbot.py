@@ -19,12 +19,13 @@
 
 
 import sys  # sys.setdefaultencoding is cancelled by site.py
-from src.MessageHandler import new_message_handler
+
+from dispatcher import dispatcher
+
 
 reload(sys)    # to re-enable sys.setdefaultencoding()
 sys.setdefaultencoding('utf-8')
 from irc import bot as ircbot
-from irc.bot import Channel
 import time
 from PySide import QtSql
 
@@ -48,7 +49,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
         self.nickpass = fafbot_config['nickpass']
         self.nickname = fafbot_config['nickname']
 
-        self.message_handler = new_message_handler(fafbot_config)
+        self.dispatcher = dispatcher(self)
 
         self.init_database()
 
@@ -65,10 +66,7 @@ class BotModeration(ircbot.SingleServerIRCBot):
 
     def on_pubmsg(self, c, e):
         try:
-            responses = self.message_handler(e.arguments[0])
-
-            for response in responses:
-                self.connection.privmsg("#aeolus", response)
+            self.dispatcher(e.arguments[0])
         except:
             pass
 

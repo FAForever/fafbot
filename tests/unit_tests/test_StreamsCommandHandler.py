@@ -1,4 +1,4 @@
-from src.MessageHandler import new_get_streams_response
+from dispatcher import new_get_streams_response
 
 
 def new_url_content_fetcher(file_name):

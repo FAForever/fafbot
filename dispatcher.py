@@ -1,29 +1,48 @@
+from functools import wraps
 import json
 import urllib2
-from src.MessageRouter import MessageRouter
+import re
+import time
 
 
-def new_message_handler(config):
-    def _new_command_handlers():
-        return {
-            'casts': _new_casts_handler(),
-            'streams': new_get_streams_response(fetch_url_contents),
-            'nyan': lambda message: ['~=[,,_,,]:3']
-        }
+def is_irc_callback(param):
+    return callable(param) and hasattr(param, 'irc_format')
 
-    def _new_casts_handler():
-        return new_get_cats_response(
-            get_url_contents=fetch_url_contents,
-            blacklisted_youtubers=config['blacklisted_youtubers'] if 'blacklisted_youtubers' in config else [],
-            cast_count=int(config['cast_count']) if 'cast_count' in config else 5
-        )
 
-    message_router = MessageRouter(
-        command_handlers=_new_command_handlers(),
-        default_rate_limit_in_seconds=int(config['default_rate_limit']) if 'default_rate_limit' in config else 60
-    )
+def irc_command(format='', limit=1):
+    def wrapper(f):
+        @wraps(f)
+        def _(*args, **kwargs):
+            f(*args, **kwargs)
+        _.irc_format = format
+        _.limit = limit
+        return _
+    return wrapper
 
-    return message_router.handle_message
+
+def dispatcher(*args, **kwargs):
+    """
+    Make a dispatcher object for irc-messages,
+    given classes to look for marked functions as targets
+    """
+    target_callbacks = []
+    for target in args:
+        target_callbacks.append({name: getattr(target, name)
+                                 for name in dir(target)
+                                 if is_irc_callback(getattr(target, name))})
+    call_times = {cb: 0 for target in target_callbacks
+                        for name, cb in target.items()}
+    def dispatch(msg='', source='', channel=''):
+        for target in target_callbacks:
+            for name, cb in target.items():
+                m = re.match(cb.irc_format, msg)
+                if m and time.time() - call_times[cb] > cb.limit:
+                    # TODO: Get fancy and inspect funcargs
+                    # to only pass what it requests
+                    # Pass named regex groups as kwargs?
+                    cb(msg, source, channel, m.groups())
+                    call_times[cb] = time.time()
+    return dispatch
 
 
 def new_get_cats_response(get_url_contents, blacklisted_youtubers=[], cast_count=5):
