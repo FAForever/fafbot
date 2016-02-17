@@ -18,7 +18,7 @@ autojoins =
 nickserv_password = ""
 detectlanguage_api_key = ""
 
-youtube_key = ""
+youtube_key =
 youtube_time_fmt = ""
 
 challonge_username = faftd

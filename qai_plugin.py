@@ -299,30 +299,18 @@ class Plugin(object):
         req = yield from aiohttp.request('GET', YOUTUBE_SEARCH.format(self.bot.config['youtube_key']))
         data = json.loads((yield from req.read()).decode())
         casts = []
-        try:
-            for item in itertools.takewhile(lambda _: len(casts) < 5, data['items']):
-                channel_title = item['snippet']['channelTitle']
-                if channel_title not in self.bot.db['blacklist'].get('users', {}) \
-                        and channel_title != '':
-                    casts.append(item)
-                    try:
-                        self.bot.action(target,
-                            "{channel}: {title} - {date}: {link}".format(
-                            **{
-                                "id": item['id']['videoId'],
-                                "title": item['snippet']['title'],
-                                "channel": channel_title,
-                                "description": item['snippet']['description'],
-                                "date": time.strftime("%x",
-                                                      time.strptime(item['snippet']['publishedAt'],
-                                                                    self.bot.config['youtube_time_fmt'])),
-                                "link": "http://youtu.be/{}".format(item['id']['videoId'])
-                            }))
-                    except (KeyError, ValueError):
-                        pass
-        except (KeyError):
-            pass
-        self.bot.action(target, "Find more here: {}".format(YOUTUBE_NON_API_SEARCH_LINK))
+        for item in itertools.takewhile(lambda _: len(casts) < 5, data['items']):
+            channel_title = item['snippet']['channelTitle']
+            casts.append(item)
+            self.bot.action(target,
+                "{channel}: {title}: {link}".format(
+                **{
+                    "id": item['id']['videoId'],
+                    "title": item['snippet']['title'],
+                    "channel": channel_title,
+                    "description": item['snippet']['description'],
+                    "link": "http://youtu.be/{}".format(item['id']['videoId'])
+                }))
 
     def spam_protect(self, cmd, mask, target, args):
         if not cmd in self.timers:
