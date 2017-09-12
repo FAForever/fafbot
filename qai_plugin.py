@@ -153,6 +153,13 @@ class Plugin(object):
 
         if sender.startswith("NickServ!"):
             self.__handleNickservMessage(msg)
+            return
+        if not msg.startswith ("!"):
+            if not sender in self.timers:
+                self.timers[sender] = 16
+            if time.time() - self.timers[sender] > 15:
+                self.bot.privmsg(kwargs['mask'].nick, "This is an official bot run by Forged Alliance Forever. Replies to this bot are not monitored. If you need to talk to a moderator, find someone with their name in white at the top of the player list. If there are none online at this time then ask someone in chat to help you.")
+                self.timers[sender] = time.time()
 
     @command(permission='admin', public=False)
     @asyncio.coroutine
